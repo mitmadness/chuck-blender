@@ -2,7 +2,10 @@
   "name": "@mitmadness/chuck-ifc",
   "version": "0.0.0-semantic-release",
   "description": "Chuck plugin that converts Industry Foundation Classes 3D models with IfcOpenShell",
-  "author": "Morgan Touverey Quilling <mtouverey@methodinthemadness.eu>",
+  "contributors": [
+    "Tristan Zimpfer <tristan.zimpfer@methodinthemadness.eu>",
+    "Morgan Touverey Quilling <mtouverey@methodinthemadness.eu>"
+  ],
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,9 +23,14 @@
   },
   "homepage": "https://github.com/mitmadness/chuck-ifc#readme",
   "devDependencies": {
+    "@mitm/chuck": "^1.0.0",
     "@types/node": "^7.0.18",
+    "@types/pify": "^0.0.28",
     "semantic-release": "^6.3.6",
     "tslint": "^5.2.0",
     "typescript": "^2.3.2"
+  },
+  "dependencies": {
+    "pify": "^2.3.0"
   }
 }
