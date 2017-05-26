@@ -1,13 +1,11 @@
 import { IConversion, IDownloadAssetsStepsContext, IStepDescription, ProgressFn } from '@mitm/chuck';
-import * as child_process from 'child_process';
-import * as fs from 'fs';
+import { spawn } from 'child_process';
+import * as fs from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
-import * as pify from 'pify';
 
 export interface IExecIfcStepsContext extends IDownloadAssetsStepsContext {
     convertedAssetsDir: string;
-    convertedAssetsPaths: string[];
 }
 
 export function describe(): IStepDescription {
@@ -26,79 +24,60 @@ export function shouldProcess(conv: IConversion, context: IExecIfcStepsContext) 
 
 export async function process(conv: IConversion, context: IExecIfcStepsContext, progress: ProgressFn): Promise<void> {
     //=> Create a temporary folder for the assets
-    const tmpDir = path.resolve(`${os.tmpdir()}/chuck-exec-ifcopenshell-${Date.now()}`);
-    await pify(fs.mkdir)(tmpDir);
+    const tmpDir = path.resolve(`${os.tmpdir()}/chuck/exec-ifcopenshell-${Date.now()}`);
+    await fs.mkdirp(tmpDir);
 
     context.convertedAssetsDir = tmpDir;
-    context.convertedAssetsPaths = [];
 
-    const conversions = context.assetsPaths.map(async (assetPath, index) => {
+    //=> Execute each conversion sequentially
+    // @todo If IfcConvert is mono-threaded, we could make it concurrent
+    for (const assetPath of context.assetsPaths) {
         if (assetPath.toLowerCase().endsWith('.ifc')) {
             await progress('convert-start', `Converting "${assetPath}" from IFC to Collada`);
-            await convertAndStoreAssets(context, assetPath, index);
+            await convertAndStoreAssets(context, assetPath);
         }
-    });
+    }
+}
 
-    //=> Await conversions and check if there are errors.
-    let remainingConversions = conversions.length;
-    const errors: any[] = [];
+export async function cleanup(context: IExecIfcStepsContext): Promise<void> {
+    await fs.remove(context.convertedAssetsDir);
+}
 
-    return new Promise<void>((resolve, reject) => {
-        conversions.forEach((conversion) => {
-            conversion.then(() => {
-                if (--remainingConversions === 0) {
-                    if (errors.length) {
-                        reject(new ConversionError('Error(s) while converting', errors));
-                    } else {
-                        resolve();
-                    }
-                }
-            }).catch((err) => {
-                --remainingConversions;
-                errors.push(err);
-            });
+async function convertAndStoreAssets(context: IExecIfcStepsContext, ifcFilePath: string): Promise<string> {
+    const colladaFileName = path.parse(ifcFilePath).name + '.dae';
+    const colladaFilePath = path.resolve(`${context.convertedAssetsDir}/${colladaFileName}`);
+
+    const converterProcess = spawn('IfcConvert', [
+        ifcFilePath, colladaFilePath,
+        '-y', '--unicode', 'escape', '--use-element-hierarchy', '--use-element-types'
+    ]);
+
+    //=> Watch process' stdout to log in real time, and keep the complete output in case of crash
+    let stdoutAggregator = '';
+
+    converterProcess.stdout.on('data', data => stdoutAggregator += data.toString());
+    converterProcess.stderr.on('data', data => stdoutAggregator += data.toString());
+
+    //=> Watch for the process to terminate, check return code
+    return new Promise<string>((resolve, reject) => {
+        converterProcess.once('close', (code) => {
+            if (code !== 0) {
+                const message = `Conversion of IFC file ${path.basename(ifcFilePath)} to Collada has failed!`;
+                return reject(new IfcConvertCrashError(message, stdoutAggregator));
+            }
+
+            const index = context.assetsPaths.findIndex(path => path === ifcFilePath);
+            context.assetsPaths[index] = colladaFilePath;
+
+            resolve(colladaFilePath);
         });
     });
 }
 
-export async function cleanup(context: Readonly<IExecIfcStepsContext>): Promise<void> {
-    const rms = context.convertedAssetsPaths.map(assetPath => pify(fs.unlink)(assetPath));
-
-    await Promise.all(rms);
-    await pify(fs.rmdir)(context.convertedAssetsDir);
-}
-
-class ConversionError extends Error {
-    constructor(message: string, public errors: any[]) {
+export class IfcConvertCrashError extends Error {
+    constructor(message: string, public readonly ifcConvertLog: string) {
         super(message);
 
-        Object.setPrototypeOf(this, ConversionError.prototype);
+        Object.setPrototypeOf(this, IfcConvertCrashError.prototype);
     }
-}
-
-async function convertAndStoreAssets(
-    context: IExecIfcStepsContext,
-    assetPath: string,
-    index: number
-): Promise<string> {
-    const fileName = path.parse(assetPath).name + '.dae';
-    const filePath = path.resolve(`${context.convertedAssetsDir}/${fileName}`);
-
-    return new Promise<string>((resolve, reject) => {
-        child_process.execFile(
-            'IfcConvert',
-            [assetPath, filePath, '-y', '--unicode', 'escape', '--use-element-hierarchy', '--use-element-types'],
-            (error, stdout) => {
-                if (error) {
-                    context.convertedAssetsPaths.push(`${filePath}.tmp`);
-                    reject(stdout);
-                    return;
-                }
-
-                context.convertedAssetsPaths.push(filePath);
-                context.assetsPaths[index] = filePath;
-
-                resolve(filePath);
-            });
-    });
 }
