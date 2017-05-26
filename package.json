@@ -1,5 +1,5 @@
 {
-  "name": "@mitmadness/chuck-ifc",
+  "name": "@mitm/chuck-ifc",
   "version": "0.0.0-semantic-release",
   "description": "Chuck plugin that converts Industry Foundation Classes 3D models with IfcOpenShell",
   "contributors": [
