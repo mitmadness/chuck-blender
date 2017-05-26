@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/mitmadness/chuck-ifc#readme",
   "devDependencies": {
-    "@mitm/chuck": "^1.0.0",
     "@types/node": "^7.0.18",
     "@types/pify": "^0.0.28",
     "semantic-release": "^6.3.6",
@@ -31,6 +30,7 @@
     "typescript": "^2.3.2"
   },
   "dependencies": {
+    "@mitm/chuck": "^1.1.1",
     "pify": "^2.3.0"
   }
 }
