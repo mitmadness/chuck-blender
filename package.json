@@ -12,7 +12,8 @@
   "scripts": {
     "build": "yarn lint && tsc",
     "watch": "tsc -w",
-    "lint": "tslint src/**/*.ts"
+    "lint": "tslint src/**/*.ts",
+    "semantic-release": "semantic-release pre && npm publish --access public && semantic-release post"
   },
   "repository": {
     "type": "git",
