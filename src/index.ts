@@ -28,13 +28,14 @@ export async function process(conv: IConversion, context: IExecIfcStepsContext, 
     await fs.mkdirp(tmpDir);
 
     context.convertedAssetsDir = tmpDir;
+    const convertOptions = conv.conversionOptions;
 
     //=> Execute each conversion sequentially
     // @todo If IfcConvert is mono-threaded, we could make it concurrent
     for (const assetPath of context.assetsPaths) {
         if (assetPath.toLowerCase().endsWith('.ifc')) {
             await progress('convert-start', `Converting "${assetPath}" from IFC to Collada`);
-            await convertAndStoreAssets(context, assetPath);
+            await convertAndStoreAssets(convertOptions, context, assetPath);
         }
     }
 }
@@ -43,14 +44,17 @@ export async function cleanup(context: IExecIfcStepsContext): Promise<void> {
     await fs.remove(context.convertedAssetsDir);
 }
 
-async function convertAndStoreAssets(context: IExecIfcStepsContext, ifcFilePath: string): Promise<string> {
+async function convertAndStoreAssets(
+    convertOptions: string[],
+    context: IExecIfcStepsContext,
+    ifcFilePath: string
+): Promise<string> {
     const colladaFileName = path.parse(ifcFilePath).name + '.dae';
     const colladaFilePath = path.resolve(`${context.convertedAssetsDir}/${colladaFileName}`);
 
-    const converterProcess = spawn('IfcConvert', [
-        ifcFilePath, colladaFilePath,
-        '-y', '--unicode', 'escape', '--use-element-hierarchy', '--use-element-types'
-    ]);
+    const spawnArgs = [ifcFilePath, colladaFilePath, '-y'].concat(convertOptions);
+
+    const converterProcess = spawn('IfcConvert', spawnArgs);
 
     //=> Watch process' stdout to log in real time, and keep the complete output in case of crash
     let stdoutAggregator = '';
