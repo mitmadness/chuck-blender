@@ -10,8 +10,8 @@
     fs-extra "^3.0.1"
 
 "@mitm/chuck@>=1.0.0":
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/@mitm/chuck/-/chuck-3.1.1.tgz#f50cf2f2b7d64444aa3761761ca76de0ff56170e"
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/@mitm/chuck/-/chuck-3.1.2.tgz#5413b951fb2bf962cad69ab7395bb175d3c7d923"
   dependencies:
     "@mitm/assetbundlecompiler" "^1.3.0"
     "@toverux/expresse" "^2.0.1"
@@ -3309,8 +3309,8 @@ tslint@^5.2.0:
     tsutils "^2.3.0"
 
 tsutils@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.3.0.tgz#96e661d7c2363f31adc8992ac67bbe7b7fc175e5"
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.4.0.tgz#ad4ce6dba0e5a3edbddf8626b7ca040782189fea"
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
