@@ -23,3 +23,11 @@ Then load it with chuck (see chuck's documentation about configuration and plugi
 ```
 CHUCK_STEPMODULEPLUGINS=@mitm/chuck-ifc yarn chuck
 ```
+
+## :wrench: Configuration
+
+Like with chuck, configuration is done via environment variables.
+
+| Variable                   | Default                        | Description |
+|----------------------------|--------------------------------|-------------|
+| `CHUCK_IFC_IFCCONVERTPATH` | `IfcConvert` (= in the `PATH`) | Path to the [IfcConvert](http://ifcopenshell.org/ifcconvert.html) executable |
