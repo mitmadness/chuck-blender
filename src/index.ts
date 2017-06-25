@@ -62,8 +62,11 @@ async function convertAndStoreAssets(
     converterProcess.stdout.on('data', data => stdoutAggregator += data.toString());
     converterProcess.stderr.on('data', data => stdoutAggregator += data.toString());
 
-    //=> Watch for the process to terminate, check return code
     return new Promise<string>((resolve, reject) => {
+        //=> Catch error events (such as ENOENT) and reject if one is catched
+        converterProcess.on('error', reject);
+
+        //=> Watch for the process to terminate, check return code
         converterProcess.once('close', (code) => {
             if (code !== 0) {
                 const message = `Conversion of IFC file ${path.basename(ifcFilePath)} to Collada has failed!`;
