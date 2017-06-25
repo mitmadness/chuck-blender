@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import * as fs from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
+import config from './config';
 
 export interface IExecIfcStepsContext extends IDownloadAssetsStepsContext {
     convertedAssetsDir: string;
@@ -54,7 +55,7 @@ async function convertAndStoreAssets(
 
     const spawnArgs = [ifcFilePath, colladaFilePath, '-y'].concat(convertOptions);
 
-    const converterProcess = spawn('IfcConvert', spawnArgs);
+    const converterProcess = spawn(config.ifcConvertPath, spawnArgs);
 
     //=> Watch process' stdout to log in real time, and keep the complete output in case of crash
     let stdoutAggregator = '';
