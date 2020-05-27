@@ -1,10 +1,11 @@
 {
-  "name": "@mitm/chuck-ifc",
+  "name": "@mitm/chuck-blender",
   "version": "0.0.0-semantic-release",
-  "description": "Chuck plugin that converts Industry Foundation Classes 3D models with IfcOpenShell",
+  "description": "Chuck plugin to convert files",
   "contributors": [
     "Tristan Zimpfer <tristan.zimpfer@methodinthemadness.eu>",
-    "Morgan Touverey Quilling <mtouverey@methodinthemadness.eu>"
+    "Morgan Touverey Quilling <mtouverey@methodinthemadness.eu>",
+    "Elouan Poupard-Cosquer <elouan.poupard.cosquer@methodinthemadness.eu>"
   ],
   "license": "MIT",
   "main": "dist/index.js",
@@ -17,12 +18,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mitmadness/chuck-ifc.git"
+    "url": "https://github.com/mitmadness/chuck-blender.git"
   },
   "bugs": {
-    "url": "https://github.com/mitmadness/chuck-ifc/issues"
+    "url": "https://github.com/mitmadness/chuck-blender/issues"
   },
-  "homepage": "https://github.com/mitmadness/chuck-ifc#readme",
+  "homepage": "https://github.com/mitmadness/chuck-blender#readme",
   "devDependencies": {
     "@types/fs-extra": "^3.0.2",
     "@types/node": "^7.0.18",
