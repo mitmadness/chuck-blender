@@ -5,57 +5,75 @@ import * as os from 'os';
 import * as path from 'path';
 import config from './config';
 
-export interface IExecIfcStepsContext extends IDownloadAssetsStepsContext {
+export interface IExecBlenderStepsContext extends IDownloadAssetsStepsContext {
     convertedAssetsDir: string;
 }
 
 export function describe(): IStepDescription {
     return {
-        code: 'exec-ifcopenshell',
-        name: 'Execute IfcOpenShell to convert IFC files into Collada files',
+        code: 'exec-blender',
+        name: 'Execute Blender to convert STEP files into FBX files',
         priority: 11, // after assets download
     };
 }
 
-export function shouldProcess(conv: IConversion, context: IExecIfcStepsContext) {
-    return context.assetsPaths &&
-        context.assetsPaths.length &&
-        context.assetsPaths.some(assetPath => assetPath.toLowerCase().endsWith('.ifc'));
+/**
+ * The predicate to process only STEP/STP files
+ * @param path
+ */
+function isStep(path: string) {
+    const lowerCasePath = path.toLowerCase();
+    return lowerCasePath.endsWith('.step') || lowerCasePath.endsWith('.stp');
 }
 
-export async function process(conv: IConversion, context: IExecIfcStepsContext, progress: ProgressFn): Promise<void> {
+export function shouldProcess(conv: IConversion, context: IExecBlenderStepsContext) {
+    return context.assetsPaths &&
+        context.assetsPaths.length &&
+        context.assetsPaths.some(isStep);
+}
+
+export async function process(conv: IConversion,
+                              context: IExecBlenderStepsContext,
+                              progress: ProgressFn): Promise<void> {
     //=> Create a temporary folder for the assets
-    const tmpDir = path.resolve(`${os.tmpdir()}/chuck/exec-ifcopenshell-${Date.now()}`);
+    const tmpDir = path.resolve(`${os.tmpdir()}/chuck/exec-blender-${Date.now()}`);
     await fs.mkdirp(tmpDir);
 
     context.convertedAssetsDir = tmpDir;
     const convertOptions = conv.conversionOptions;
 
     //=> Execute each conversion sequentially
-    // @todo If IfcConvert is mono-threaded, we could make it concurrent
     for (const assetPath of context.assetsPaths) {
-        if (assetPath.toLowerCase().endsWith('.ifc')) {
-            await progress('convert-start', `Converting "${assetPath}" from IFC to Collada`);
+        if (isStep(assetPath)) {
+            await progress('convert-start', `Converting "${assetPath}" from STEP to FBX`);
             await convertAndStoreAssets(convertOptions, context, assetPath);
         }
     }
 }
 
-export async function cleanup(context: IExecIfcStepsContext): Promise<void> {
+export async function cleanup(context: IExecBlenderStepsContext): Promise<void> {
     await fs.remove(context.convertedAssetsDir);
 }
 
 async function convertAndStoreAssets(
     convertOptions: string[],
-    context: IExecIfcStepsContext,
-    ifcFilePath: string
+    context: IExecBlenderStepsContext,
+    stepFilePath: string
 ): Promise<string> {
-    const colladaFileName = path.parse(ifcFilePath).name + '.dae';
-    const colladaFilePath = path.resolve(`${context.convertedAssetsDir}/${colladaFileName}`);
+    const fbxFileName = path.parse(stepFilePath).name + '.fbx';
+    const fbxFilePath = path.resolve(`${context.convertedAssetsDir}/${fbxFileName}`);
 
-    const spawnArgs = [ifcFilePath, colladaFilePath, '-y'].concat(convertOptions);
+    // Expected command:
+    // blender -b --python .\step_to_fbx.py --python-exit-code 1 -- "path/file.stp" "path/file.fbx"
+    const spawnArgs = [
+        '-b',
+        '--python', path.join(__dirname, '..', 'src', 'convert.py').toString(),
+        '--python-exit-code', '1',
+        '--',
+        stepFilePath,
+        fbxFilePath].concat(convertOptions);
 
-    const converterProcess = spawn(config.ifcConvertPath, spawnArgs);
+    const converterProcess = spawn(config.blenderPath, spawnArgs);
 
     //=> Watch process' stdout to log in real time, and keep the complete output in case of crash
     let stdoutAggregator = '';
@@ -70,22 +88,22 @@ async function convertAndStoreAssets(
         //=> Watch for the process to terminate, check return code
         converterProcess.once('close', (code) => {
             if (code !== 0) {
-                const message = `Conversion of IFC file ${path.basename(ifcFilePath)} to Collada has failed!`;
-                return reject(new IfcConvertCrashError(message, stdoutAggregator));
+                const message = `Conversion of STEP file ${path.basename(stepFilePath)} to FBX has failed!`;
+                return reject(new BlenderCrashError(message, stdoutAggregator));
             }
 
-            const index = context.assetsPaths.findIndex(path => path === ifcFilePath);
-            context.assetsPaths[index] = colladaFilePath;
+            const index = context.assetsPaths.findIndex(path => path === stepFilePath);
+            context.assetsPaths[index] = fbxFilePath;
 
-            resolve(colladaFilePath);
+            resolve(fbxFilePath);
         });
     });
 }
 
-export class IfcConvertCrashError extends Error {
-    constructor(message: string, public readonly ifcConvertLog: string) {
+export class BlenderCrashError extends Error {
+    constructor(message: string, public readonly BlenderLog: string) {
         super(message);
 
-        Object.setPrototypeOf(this, IfcConvertCrashError.prototype);
+        Object.setPrototypeOf(this, BlenderCrashError.prototype);
     }
 }
