@@ -79,6 +79,21 @@ Then load it with chuck (see chuck's documentation about configuration and plugi
 CHUCK_STEPMODULEPLUGINS=@mitm/chuck-blender yarn chuck
 ```
 
+### For developpment 
+
+Since the plugin is a different project entirely, there is an extra step to get a development environment.
+```bash
+# Register the plugin in yarn/npm to access it from Chuck
+cd chuck-blender
+yarn link
+
+# Finish the link
+cd ../chuck
+yarn link @mitm/chuck-blender
+```
+
+Note: don't forget to add `@mitm/chuck-blender` in the env var `CHUCK_STEPMODULEPLUGINS`.
+
 ## :wrench: Configuration
 
 Like with chuck, configuration is done via environment variables.
