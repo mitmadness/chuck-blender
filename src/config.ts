@@ -1,9 +1,9 @@
 export interface IChuckIfcConfig {
-    ifcConvertPath: string;
+    blenderPath: string;
 }
 
 const config: IChuckIfcConfig = {
-    ifcConvertPath: process.env.CHUCK_IFC_IFCCONVERTPATH || 'IfcConvert'
+    blenderPath: process.env.CHUCK_BLENDER_BLENDERPATH || 'blender'
 };
 
 export default config;
