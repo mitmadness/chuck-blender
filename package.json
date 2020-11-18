@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/fs-extra": "^3.0.2",
     "@types/node": "^7.0.18",
-    "semantic-release": "^6.3.6",
+    "semantic-release": "^17.2.3",
     "tslint": "^5.2.0",
     "typescript": "^2.3.2"
   },
